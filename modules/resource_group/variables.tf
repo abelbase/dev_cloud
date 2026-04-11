@@ -15,6 +15,6 @@ variable "tags" {
     env          = string
     app_name     = string
     created_date = string
-    created_by   = optional(string,"terraform")
+    created_by   = optional(string, "terraform")
   })
 }
