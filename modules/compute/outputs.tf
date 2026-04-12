@@ -5,5 +5,5 @@ output "all_out_nic" {
   value = azurerm_network_interface.this
 }
 output "vm_id" {
- value = azurerm_linux_virtual_machine.this.id
+  value = azurerm_linux_virtual_machine.this.id
 }

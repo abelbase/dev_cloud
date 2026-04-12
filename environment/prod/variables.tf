@@ -48,17 +48,17 @@ variable "nic_details" {
 }
 variable "public_ip" {
   type = map(object({
-    name = string 
+    name              = string
     allocation_method = optional(string, "Static")
   }))
 }
 variable "vm_name" {
   type = map(object({
     subnet_name = string
-    is_public = optional(bool,false)
+    is_public   = optional(bool, false)
     nic = object({
-      name = string 
-      ip_config_name = string 
+      name           = string
+      ip_config_name = string
 
     })
   }))
@@ -93,4 +93,10 @@ variable "vault_secret" {
 }
 variable "vault_rg" {
   type = string
+}
+variable "vm_extension" {
+  type = map(object({
+    vm_name     = string
+    script_name = string
+  }))
 }

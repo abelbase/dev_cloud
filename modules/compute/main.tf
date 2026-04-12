@@ -6,7 +6,7 @@ resource "azurerm_network_interface" "this" {
     name                          = var.nic_details.ip_config_name
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = try(azurerm_public_ip.this[0].id, null)
-    subnet_id = var.subnet_id
+    subnet_id                     = var.subnet_id
   }
 }
 resource "azurerm_linux_virtual_machine" "this" {
@@ -35,7 +35,7 @@ resource "azurerm_linux_virtual_machine" "this" {
 
 
 resource "azurerm_public_ip" "this" {
-  count = var.public_ip !=null ? 1 : 0
+  count               = var.public_ip != null ? 1 : 0
   name                = var.public_ip["name"]
   resource_group_name = var.rg
   location            = var.location

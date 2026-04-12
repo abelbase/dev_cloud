@@ -1,1 +1,1 @@
-sudo apt update -y && sudo apt install nginx -y
+sudo apt update -y && sudo apt install python3 -y && python3 --version

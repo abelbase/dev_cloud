@@ -2,7 +2,7 @@ locals {
   tags = merge(
     var.tags,
     {
-      created_date = formatdate("YYYY-MM-DD",time_static.this.rfc3339)
+      created_date = formatdate("YYYY-MM-DD", time_static.this.rfc3339)
     }
   )
 }
@@ -35,32 +35,33 @@ data "azurerm_key_vault_secret" "keys" {
   key_vault_id = data.azurerm_key_vault.main.id
 }
 module "mod_vm" {
-  source            = "../../modules/compute"
-  for_each          = var.vm_name
-  nic_details       = each.value.nic
-  rg                = module.mod_rg.rg_name
-  location          = module.mod_rg.rg_location
-  vm_name           = each.key
-  size              = var.size
-  username          = var.username
-  public_ip = each.value.is_public ? lookup(var.public_ip,each.key,null): null
-  tags              = local.tags
-  pub_key           = data.azurerm_key_vault_secret.keys.value
-  subnet_id = lookup(module.mod_vnet.sunet_id,each.value.subnet_name,null) != null ? module.mod_vnet.sunet_id[each.value.subnet_name] : null
+  source      = "../../modules/compute"
+  for_each    = var.vm_name
+  nic_details = each.value.nic
+  rg          = module.mod_rg.rg_name
+  location    = module.mod_rg.rg_location
+  vm_name     = each.key
+  size        = var.size
+  username    = var.username
+  public_ip   = each.value.is_public ? lookup(var.public_ip, each.key, null) : null
+  tags        = local.tags
+  pub_key     = data.azurerm_key_vault_secret.keys.value
+  subnet_id   = lookup(module.mod_vnet.sunet_id, each.value.subnet_name, null) != null ? module.mod_vnet.sunet_id[each.value.subnet_name] : null
 }
 
 resource "azurerm_virtual_machine_extension" "customScript" {
- name = "ubuntu"
- virtual_machine_id = module.mod_vm["frontend"].vm_id 
- publisher = "Microsoft.Azure.Extensions"
- type = "CustomScript"
- type_handler_version = "2.0"
- settings =jsonencode({
-  commandToExecute = file("${path.module}/run.sh")
- })
- tags = local.tags
+  for_each             = var.vm_extension
+  name                 = each.key
+  virtual_machine_id   = module.mod_vm[each.value.vm_name].vm_id
+  publisher            = "Microsoft.Azure.Extensions"
+  type                 = "CustomScript"
+  type_handler_version = "2.0"
+  settings = jsonencode({
+    commandToExecute = file("${path.module}/${each.value.script_name}")
+  })
+  tags = local.tags
 }
 resource "time_static" "this" {
-  
+
 }
 

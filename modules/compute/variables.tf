@@ -1,16 +1,16 @@
 variable "public_ip" {
   type = object({
-    name = string 
+    name              = string
     allocation_method = optional(string, "Static")
   })
 }
 variable "vm_name" {
-  type = string 
+  type = string
 }
 variable "nic_details" {
   type = object({
-    name = string 
-    ip_config_name = string 
+    name           = string
+    ip_config_name = string
   })
 }
 variable "subnet_id" {

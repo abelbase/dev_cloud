@@ -1,0 +1,28 @@
+trigger:
+- None
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+ - job: 
+   steps:
+      - task: AzureKeyVault@2
+        inputs:
+          azureSubscription: 'your-service-connection'
+          KeyVaultName: 'your-KV-name'
+          SecretsFilter: 'your-private-key'
+          RunAsPreJob: true
+      - task: Bash@3
+        env:
+          PRIVATE_KEY: $(privatekey)
+        inputs:
+          targetType: 'inline'
+          script: |
+            printf '%s' "$PRIVATE_KEY" \
+              | sed 's/\\n/\n/g' \
+              | tr -d '\r' \
+              > "myprivate"
+            chmod 600 myprivate
+            sudo apt install -y ansible
+            ansible-playbook -i $(System.DefaultWorkingDirectory)/ansible/vm/servers.yaml $(System.DefaultWorkingDirectory)/ansible/vm/server_playbook.yaml 

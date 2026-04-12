@@ -3,13 +3,13 @@ output "subnets" {
 }
 output "pub" {
   value = {
-    for k , v in module.mod_vm : 
+    for k, v in module.mod_vm :
     k => v.all_out_pub
   }
 }
 output "nic" {
-  value ={
-    for k , v in module.mod_vm : 
+  value = {
+    for k, v in module.mod_vm :
     k => v.all_out_nic
-}
+  }
 }

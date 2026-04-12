@@ -1,0 +1,62 @@
+- name: setup frontend server
+  hosts: frontend
+  become: true
+  vars:
+    server_ip: 10.0.0.4
+    server_name: 10.0.0.4
+    port_number: 5000
+  tasks:
+    - name: Update apt cache               
+      apt:                                 
+        update_cache: yes                  
+        cache_valid_time: 3600
+    - name: Intall nginx
+      apt: 
+        name: nginx
+        state: present
+    - name: copy file
+      copy:
+        src: "{{ playbook_dir }}/index.html"
+        dest: /var/www/html/index.nginx-debian.html
+        backup: yes
+    - name: copy nginx congif
+      template:
+        src: "{{ playbook_dir }}/nginx.conf.j2"
+        dest: /etc/nginx/sites-available/myapp.conf
+    - name: create soft link
+      file:
+        src: /etc/nginx/sites-available/myapp.conf
+        dest: /etc/nginx/sites-enabled/myapp.conf
+        state: link
+    - name: disable default link
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+- name: setup backend
+  hosts: backend
+  become: true
+  tasks:
+    - name: Install dependencies
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+        state: present
+        update_cache: yes
+    - name: create virtual env
+      command: python3 -m venv /opt/flaskenv
+    - name: Install flask
+      pip:
+        name: flask
+        virtualenv: /opt/flaskenv
+    - name: Copy flask file
+      copy:
+        src: "{{ playbook_dir }}/app.py"
+        dest: /opt/app.py
+    - name: Run flask app with env
+      shell: nohup /opt/flaskenv/bin/python3 /opt/app.py > /opt/flask.log 2>&1 &
