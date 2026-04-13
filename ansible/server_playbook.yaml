@@ -36,6 +36,35 @@
       service:
         name: nginx
         state: restarted
+- name: database setup
+  hosts: database
+  become: true
+  vars:
+    server_ip: 10.0.0.0
+  tasks:
+    - name: Install postgres
+      apt: 
+        name: 
+          - postgresql
+          - postgresql-contrib
+        state: present
+        update_cache: yes
+    - name: change password 
+      shell: |
+         sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '{{ password }}';"
+    - name: update postgres conf 
+      lineinfile:
+        path: /etc/postgresql/14/main/postgresql.conf
+        regexp: "^#?listen_addresses"
+        line: "listen_addresses='*'"
+    - name: updaste pg_hba.conf
+      lineinfile:
+        path: /etc/postgresql/14/main/pg_hba.conf
+        line: "host all all {{ server_ip }}/24 md5"
+    - name: Start PostgreSQL
+      service:
+        name: postgresql@14-main
+        state: started
 - name: setup backend
   hosts: backend
   become: true
@@ -52,11 +81,27 @@
       command: python3 -m venv /opt/flaskenv
     - name: Install flask
       pip:
-        name: flask
+        name:
+          - flask
+          - psycopg2-binary
         virtualenv: /opt/flaskenv
     - name: Copy flask file
       copy:
         src: "{{ playbook_dir }}/app.py"
         dest: /opt/app.py
+    - name: Copy db file
+      copy:
+        src: "{{ playbook_dir }}/db.py"
+        dest: /opt/db.py
+    - name: create table and insert
+      shell: /opt/flaskenv/bin/python3 /opt/db.py > /opt/flask.log 2>&1 
+      environment:
+        PG_CONN: "{{ pg_conn }}"
+    - name: Kill existing Flask process
+      shell: |
+        pkill -f "/opt/flaskenv/bin/python3 /opt/app.py" 
+      failed_when: false
     - name: Run flask app with env
-      shell: nohup /opt/flaskenv/bin/python3 /opt/app.py > /opt/flask.log 2>&1 &
+      shell: |
+        export PG_CONN="{{ pg_conn }}"
+        nohup /opt/flaskenv/bin/python3 /opt/app.py > /opt/flask.log 2>&1 & 

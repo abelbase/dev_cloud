@@ -11,3 +11,9 @@ backend:
       ansible_user: azureuser 
       ansible_ssh_private_key_file: myprivate 
       ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -i myprivate -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@ip"'
+database:
+  hosts:
+    10.0.2.4:
+      ansible_user: azureuser 
+      ansible_ssh_private_key_file: myprivate 
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -i myprivate -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@138.91.123.210"'
