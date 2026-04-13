@@ -3,14 +3,15 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-
+variables:
+- group: pg
 jobs:
  - job: 
    steps:
       - task: AzureKeyVault@2
         inputs:
           azureSubscription: 'your-service-connection'
-          KeyVaultName: 'your-KV-name'
+          KeyVaultName: 'your-key-name'
           SecretsFilter: 'your-private-key'
           RunAsPreJob: true
       - task: Bash@3
@@ -25,4 +26,5 @@ jobs:
               > "myprivate"
             chmod 600 myprivate
             sudo apt install -y ansible
-            ansible-playbook -i $(System.DefaultWorkingDirectory)/ansible/vm/servers.yaml $(System.DefaultWorkingDirectory)/ansible/vm/server_playbook.yaml 
+            ansible-playbook -i $(System.DefaultWorkingDirectory)/ansible/vm/servers.yaml $(System.DefaultWorkingDirectory)/ansible/vm/server_playbook.yaml \
+            -e "pg_conn=$(pg_conn) password=$(pg_password)"
