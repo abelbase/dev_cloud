@@ -5,6 +5,18 @@ locals {
       created_date = formatdate("YYYY-MM-DD", time_static.this.rfc3339)
     }
   )
+  private_ips = {
+    for k, v in module.mod_vm :
+    k => v.vm.private_ip_address
+  }
+  backend_pool = {
+    for pool_key, pool_value in var.lb_backend_pool_address_name :
+    pool_key => merge(
+      pool_value,
+      { virtual_network_id = module.mod_vnet.vnet_id
+      ip_address = module.mod_vm["frontend"].vm.private_ip_address }
+    )
+  }
 }
 
 module "mod_rg" {
@@ -35,7 +47,7 @@ data "azurerm_key_vault_secret" "keys" {
   key_vault_id = data.azurerm_key_vault.main.id
 }
 module "mod_vm" {
-  source      = "../../modules/compute"
+  source      = "git::https://github.com/abelbase/dev_cloud.git//modules/compute?ref=v1.0.0"
   for_each    = var.vm_name
   nic_details = each.value.nic
   rg          = module.mod_rg.rg_name
@@ -63,5 +75,18 @@ resource "azurerm_virtual_machine_extension" "customScript" {
 }
 resource "time_static" "this" {
 
+}
+module "mod_lb" {
+  source                       = "git::https://github.com/abelbase/dev_cloud.git//modules/lb?ref=v1.0.0"
+  public_ip                    = var.public_ip_alb
+  lb_name                      = var.lb_name
+  lb_ip_config                 = var.lb_ip_config
+  tags                         = var.tags
+  lb_backend_pool_name         = var.lb_backend_pool_name
+  lb_backend_pool_address_name = local.backend_pool
+  lb_rule                      = var.lb_rule
+  lb_probe                     = var.lb_probe
+  rg                           = module.mod_rg.rg_name
+  location                     = module.mod_rg.rg_location
 }
 
