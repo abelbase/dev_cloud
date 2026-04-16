@@ -151,3 +151,7 @@ variable "lb_probe" {
   }))
   default = null
 }
+variable "subs_id" {
+  type = string 
+  description = "subscription id"
+}
