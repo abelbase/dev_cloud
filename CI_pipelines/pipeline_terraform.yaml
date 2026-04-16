@@ -1,0 +1,136 @@
+trigger:
+- none
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: env
+    displayName: "select environment"
+    type: string
+    default: "non_prod"
+    values:
+      - prod
+      - non_prod
+variables:
+  -  group: terraformbackend
+stages:
+  - stage: terraform_plan
+    displayName: "terraform plan"
+    jobs:
+      - job:
+        displayName: "Terraform Job"
+        steps:
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: 'latest'
+          - ${{ if eq(parameters.env, 'prod') }}:
+              - task: TerraformTask@5
+                displayName: "Terraform init"
+                inputs:
+                  provider: 'azurerm'
+                  command: 'init'
+                  workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environment/${{ parameters.env }}'
+                  backendServiceArm: 'All-Purpose-SP'
+                  backendAzureRmStorageAccountName: 'examplestorag101'
+                  backendAzureRmContainerName: 'terraformprodbackend'
+                  backendAzureRmKey: 'prod.terraform.tfstate'
+          - ${{ else }}:
+              - task: TerraformTask@5
+                displayName: "Terraform init"
+                inputs:
+                  provider: 'azurerm'
+                  command: 'init'
+                  workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environment/${{ parameters.env }}'
+                  backendServiceArm: 'All-Purpose-SP'
+                  backendAzureRmStorageAccountName: 'examplestorag101'
+                  backendAzureRmContainerName: 'terraformnonprodbackend'
+                  backendAzureRmKey: 'nonprod.terraform.tfstate'
+          - task: TerraformTask@5
+            displayName: "Terraform validate"
+            inputs:
+              provider: 'azurerm'
+              command: 'validate'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environment/${{ parameters.env }}'
+          - task: TerraformTask@5
+            displayName: "Terraform fmt"
+            inputs:
+              provider: 'azurerm'
+              command: 'custom'
+              outputTo: 'console'
+              customCommand: 'fmt'
+              environmentServiceNameAzureRM: 'All-Purpose-SP'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environment/${{ parameters.env }}'
+          - task: TerraformTask@5
+            displayName: "Terraform plan"
+            inputs:
+              provider: 'azurerm'
+              command: 'plan'
+              commandOptions: '-var="subs_id=$(subs_id)" -out=tfplan'
+              environmentServiceNameAzureRM: 'All-Purpose-SP'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environment/${{ parameters.env }}'
+          - task: PublishPipelineArtifact@1
+            displayName: save plan output
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/terraform/environment/${{ parameters.env }}/tfplan'
+              artifact: 'tfplan'
+              publishLocation: 'pipeline'
+  - stage: "Approval"
+    dependsOn: terraform_plan
+    jobs:
+      - job: Approval
+        displayName: "Approval"
+        pool: server
+        steps:
+          - task: ManualValidation@1
+            inputs:
+              notifyUsers: 'xyz@xyz.com'
+              approvers: 'xyz@xyz.com'
+              instructions: 'please approve'
+  - stage: "Deploy"
+    dependsOn:
+      - "terraform_plan"
+      - "Approval"
+    jobs:
+    - job:
+      displayName: "Terraform Appply"
+      steps:
+        - task: TerraformInstaller@1
+          inputs:
+            terraformVersion: 'latest'
+        - task: DownloadPipelineArtifact@2
+          displayName: Download plan output
+          inputs:
+            buildType: 'current'
+            artifactName: 'tfplan'
+            targetPath: '$(System.DefaultWorkingDirectory)/terraform/environment/${{ parameters.env }}/tfplan'
+        - ${{ if eq(parameters.env, 'prod') }}:
+              - task: TerraformTask@5
+                displayName: "Terraform init"
+                inputs:
+                  provider: 'azurerm'
+                  command: 'init'
+                  workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environment/${{ parameters.env }}'
+                  backendServiceArm: 'All-Purpose-SP'
+                  backendAzureRmStorageAccountName: 'examplestorag101'
+                  backendAzureRmContainerName: 'terraformprodbackend'
+                  backendAzureRmKey: 'prod.terraform.tfstate'
+        - ${{ else }}:
+              - task: TerraformTask@5
+                displayName: "Terraform init"
+                inputs:
+                  provider: 'azurerm'
+                  command: 'init'
+                  workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environment/${{ parameters.env }}'
+                  backendServiceArm: 'All-Purpose-SP'
+                  backendAzureRmStorageAccountName: 'examplestorag101'
+                  backendAzureRmContainerName: 'terraformnonprodbackend'
+                  backendAzureRmKey: 'nonprod.terraform.tfstate'
+        - task: TerraformTask@5
+          displayName: "terraform apply"
+          inputs:
+            provider: 'azurerm'
+            command: 'apply'
+            commandOptions: '-auto-approve tfplan/tfplan'
+            environmentServiceNameAzureRM: 'All-Purpose-SP'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environment/${{ parameters.env }}'
