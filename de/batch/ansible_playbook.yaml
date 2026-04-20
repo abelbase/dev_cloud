@@ -1,0 +1,83 @@
+---
+- name: Setup database 
+  hosts: database
+  vars:
+    pg_version: 16
+  tasks:
+    - name: update system package
+      become: true
+      apt: 
+        update_cache: yes
+        cache_valid_time: 3600 
+    - name: Install postgresql
+      become: true
+      apt: 
+        name: 
+          - postgresql-{{ pg_version }}
+          - postgresql-contrib
+          - python3
+          - python3-venv
+          - python3-pip
+    - name: create folder
+      become: false
+      command: mkdir -p /home/azureuser/app
+    - name: Create VENV 
+      command : python3 -m venv /home/azureuser/app/myvenv
+    - name: Install psyopg2 
+      become: false
+      pip: 
+        name: 
+          - psycopg2-binary
+        virtualenv: /home/azureuser/app/myvenv
+    - name: change password 
+      become: true
+      shell: |
+         sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '{{ password }}';"
+    - name: update postgres conf
+      become: true
+      lineinfile:
+        path: /etc/postgresql/{{ pg_version }}/main/postgresql.conf
+        regex: "^#?listen_addresses"
+        line: "listen_addresses='*'"
+    - name: updaste pg_hba.conf
+      become: true
+      lineinfile:
+        path: /etc/postgresql/{{ pg_version }}/main/pg_hba.conf
+        line: "host all all 0.0.0.0/0 md5"
+    - name: Start PostgreSQL
+      become: true
+      service:
+        name: postgresql@'{{ pg_version }}'-main
+        state: started
+    - name: Deploy python Code
+      become: false
+      copy:
+        src: "{{ item }}"
+        dest: /home/azureuser/app/
+        owner: azureuser
+        group: azureuser
+        mode: '0644'
+      with_fileglob:
+        - "{{ file_path }}/*.py"
+    - name: write scripts
+      become: false
+      copy:
+        dest: /home/azureuser/app/run.sh
+        owner: azureuser
+        group: azureuser
+        mode: '0755'
+        content: |
+          #!/bin/bash
+          exec /home/azureuser/app/myvenv/bin/python3 /home/azureuser/app/main.py >> /home/azureuser/app/batch_debug.txt 2>&1
+    - name: cron job 
+      become: false
+      ansible.builtin.cron:
+        name: batch 
+        minute: "15"
+        hour: "*"
+        job: 'PG_CONN={{ pg_conn }} /bin/bash /home/azureuser/app/run.sh'
+        state: present
+    - name: remove old cron job
+      ansible.builtin.cron:
+        name: data generation
+        state: absent

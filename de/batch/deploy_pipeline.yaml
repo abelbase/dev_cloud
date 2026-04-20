@@ -1,0 +1,41 @@
+trigger:
+- none
+
+pool:
+  vmImage: ubuntu-latest
+variables:
+  - group: pg
+stages:
+  - stage:
+    displayName: "Deploy Batch Python"
+    jobs:
+      - job: Ansible
+        steps:
+          - task: Bash@3
+            displayName: Install Ansilbe
+            inputs:
+              targetType: 'inline'
+              script: |
+                sudo apt install ansible
+          - task: AzureKeyVault@2
+            displayName: Connecting KV
+            inputs:
+              azureSubscription: 'All-Purpose-SP'
+              KeyVaultName: 'asbKV'
+              SecretsFilter: 'privatekey'
+              RunAsPreJob: false
+          - task: Bash@3
+            displayName: Deploying
+            env:
+              PRIVATE_KEY: $(privatekey)
+            inputs:
+              targetType: 'inline'
+              script: |
+                printf '%s' "$PRIVATE_KEY" \
+                | sed 's/\\n/\n/g' \
+                | tr -d '\r' \
+                > "myprivate"
+                chmod 600 myprivate
+                ansible-playbook -i '$(System.DefaultWorkingDirectory)/de/batch/data_generation/inventory_server.yml' \
+                 '$(System.DefaultWorkingDirectory)/de/batch/data_generation/deploy_playbook.yml' \
+                 -e 'pg_conn="$(batch_pg)" file_path=$(System.DefaultWorkingDirectory)/de/batch/data_generation password=$(pg_password)'
