@@ -17,6 +17,15 @@ locals {
       ip_address = module.mod_vm["frontend"].vm.private_ip_address }
     )
   }
+  updated_aks_config = merge(var.aks_config, {
+    resource_group_name = module.mod_rg.rg_name,
+    location            = module.mod_rg.rg_location
+  })
+  updated_acr_config = merge(var.acr_config,
+    {
+      resource_group_name = module.mod_rg.rg_name,
+      location            = module.mod_rg.rg_location
+  })
 }
 
 module "mod_rg" {
@@ -47,7 +56,7 @@ data "azurerm_key_vault_secret" "keys" {
   key_vault_id = data.azurerm_key_vault.main.id
 }
 module "mod_vm" {
-  source      = "git::https://github.com/abelbase/dev_cloud.git//modules/compute?ref=v1.0.0"
+  source      = "git::https://github.com/abelbase/dev_cloud.git//modules/compute?ref=v1.0.1"
   for_each    = var.vm_name
   nic_details = each.value.nic
   rg          = module.mod_rg.rg_name
@@ -77,7 +86,7 @@ resource "time_static" "this" {
 
 }
 module "mod_lb" {
-  source                       = "git::https://github.com/abelbase/dev_cloud.git//modules/lb?ref=v1.0.0"
+  source                       = "git::https://github.com/abelbase/dev_cloud.git//modules/lb?ref=v1.0.1"
   public_ip                    = var.public_ip_alb
   lb_name                      = var.lb_name
   lb_ip_config                 = var.lb_ip_config
@@ -88,5 +97,12 @@ module "mod_lb" {
   lb_probe                     = var.lb_probe
   rg                           = module.mod_rg.rg_name
   location                     = module.mod_rg.rg_location
+  depends_on                   = [module.mod_rg]
 }
 
+module "mod_aks" {
+  source     = "../../modules/aks"
+  aks_config = local.updated_aks_config
+  tags       = var.tags
+  acr_config = local.updated_acr_config
+}

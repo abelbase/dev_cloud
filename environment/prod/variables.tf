@@ -10,9 +10,9 @@ variable "app_name" {
 
 variable "tags" {
   type = object({
-    env          = string
-    app_name     = string
-    created_date = string
+    dept = string
+    team = string
+    env  = string
   })
 }
 variable "vnet_name" {
@@ -151,7 +151,29 @@ variable "lb_probe" {
   }))
   default = null
 }
+
 variable "subs_id" {
-  type = string 
-  description = "subscription id"
+  type        = string
+  description = "subscription id "
+}
+
+variable "aks_config" {
+  type = object({
+    aks_name            = optional(string, null)
+    location            = optional(string, null)
+    resource_group_name = optional(string, null)
+    dns_prefix          = optional(string, null)
+    default_node_pool   = optional(map(string), {})
+  })
+  default = {}
+}
+variable "acr_config" {
+  type = object({
+    name                = optional(string, null)
+    resource_group_name = optional(string, null)
+    location            = optional(string, null)
+    sku                 = optional(string, "Standard")
+    role_assingment     = optional(string, null)
+  })
+  default = null
 }

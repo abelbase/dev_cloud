@@ -36,7 +36,7 @@ variable "nsg_details" {
   }))
   default = {}
 }
+
 variable "subs_id" {
-  type = string 
-  description = "subscription id"
+  type = string
 }

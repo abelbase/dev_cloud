@@ -1,0 +1,85 @@
+{
+    "locationPolicy": {
+        "name": "locationPolicy",
+        "policy_type": "Custom",
+        "mode": "Indexed",
+        "display_name": "Allowed location policy",
+        "policy_rule": {
+            "if": {
+                "not": {
+                    "field": "location",
+                    "in": ["East US"]
+                }
+            },
+            "then": {
+                "effect": "audit"
+            }
+        }
+    },
+    "tagPolicy": {
+        "name": "tagPolicy",
+        "policy_type": "Custom",
+        "mode": "Indexed",
+        "display_name": "tag policy",
+        "policy_rule": {
+            "if": {
+                "allOf": [
+                    {
+                        "field": "type",
+                        "notEquals": "Microsoft.Resources/subscriptions/resourceGroups"
+                    },
+                    {
+                        "field": "tags['env']",
+                        "exists": false
+                    },
+                    {
+                        "field": "tags['dept']",
+                        "exists": false
+                    },
+                    {
+                        "field": "tags['team']",
+                        "exists": false
+                    },
+                    {
+                        "field": "tags['created_by']",
+                        "exists": false
+                    },
+                    {
+                        "field": "tags['created_date']",
+                        "exists": false
+                    }
+                ]
+            },
+            "then": {
+                "effect": "deny"
+            }
+        }
+    },
+    "vmSKUPolicy": {
+        "name": "vmSKUPolicy",
+        "policy_type": "Custom",
+        "mode": "Indexed",
+        "display_name": "VM SKU policy",
+        "policy_rule": {
+            "if": {
+                "allOf": [
+                    {
+                        "field": "type",
+                        "equals": "Microsoft.Compute/virtualMachines"
+                    },
+                    {
+                        "field": "Microsoft.Compute/virtualMachines/sku.name",
+                        "notIn": [
+                            "Standard_B1s",
+                            "Standard_B2s",
+                            "Standard_D2s_v3"
+                        ]
+                    }
+                ]
+            },
+            "then": {
+                "effect": "deny"
+            }
+        }
+    }
+}

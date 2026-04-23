@@ -1,5 +1,5 @@
 module "mod_rg" {
-  source      = "../../modules/resource_group"
+  source      = "git::https://github.com/abelbase/dev_cloud.git//modules/resource_group?ref=v1.0.0"
   rg_location = var.rg_location
   rg_name     = "${var.rg_name}-${var.app_name}-nonprod-rg"
   app_name    = var.app_name
@@ -7,7 +7,7 @@ module "mod_rg" {
 }
 
 module "mod_vnet" {
-  source             = "../../modules/networking"
+  source             = "git::https://github.com/abelbase/dev_cloud.git//modules/networking?ref=v1.0.0"
   vnet_name          = var.vnet_name
   app_name           = var.app_name
   rg                 = module.mod_rg.rg_name
