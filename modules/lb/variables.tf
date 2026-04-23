@@ -26,9 +26,9 @@ variable "lb_ip_config" {
 }
 variable "tags" {
   type = object({
-    env          = string
-    app_name     = string
-    created_date = string
+    dept = string
+    team = string
+    env  = string
   })
 }
 variable "lb_backend_pool_name" {

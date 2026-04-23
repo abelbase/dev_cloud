@@ -1,9 +1,7 @@
 variable "vnet_name" {
   type = string
 }
-variable "app_name" {
-  type = string
-}
+
 variable "rg" {
   type = string
 }
@@ -22,10 +20,11 @@ variable "vnet_address_space" {
 
 variable "tags" {
   type = object({
+    dept         = string
+    team         = string
     env          = string
-    app_name     = string
+    created_by   = string
     created_date = string
-    created_by   = optional(string, "terraform")
   })
 }
 variable "subnet_details" {
@@ -39,7 +38,7 @@ variable "nsg_details" {
   type = map(object({
     nsg_name    = string
     subnet_name = string
-    rule        = optional(map(map(string)), {})
+    rule        = any
   }))
   default = {}
 }

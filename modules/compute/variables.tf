@@ -39,13 +39,11 @@ variable "username" {
 
 variable "tags" {
   type = object({
-    env          = string
-    app_name     = string
-    created_date = string
-    created_by   = optional(string, "terraform")
+    dept = string
+    team = string
+    env  = string
   })
 }
-
 variable "pub_key" {
   type = string
 }

@@ -1,5 +1,5 @@
 resource "azurerm_kubernetes_cluster" "this" {
-  for_each            = var.aks_config != null ? { var.aks_config.aks_name = var.aks_config } : {}
+  for_each            = var.aks_config != null ? { "${var.aks_config.aks_name}" = var.aks_config } : {}
   name                = each.value.aks_name
   location            = each.value.location
   resource_group_name = each.value.resource_group_name
@@ -24,7 +24,7 @@ resource "azurerm_container_registry" "this" {
   tags                = var.tags
 }
 resource "azurerm_role_assignment" "this" {
-  for_each                         = var.acr_config != null ? { "${var.acr_config}" = var.acr_config } : {}
+  for_each                         = var.acr_config != null ? { "${var.acr_config.name}" = var.acr_config } : {}
   principal_id                     = azurerm_kubernetes_cluster.this[each.value.role_assingment].kubelet_identity[0].object_id
   role_definition_name             = "AcrPull"
   scope                            = azurerm_container_registry.this[each.key].id

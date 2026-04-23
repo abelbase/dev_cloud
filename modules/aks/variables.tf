@@ -9,8 +9,11 @@ variable "aks_config" {
   default = {}
 }
 variable "tags" {
-  type = map(any)
-
+  type = object({
+    dept = string
+    team = string
+    env  = string
+  })
 }
 variable "acr_config" {
   type = object({
