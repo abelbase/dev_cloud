@@ -1,7 +1,7 @@
 {
     "ssh":{
         "name" : "allowssh",
-        "priority": 200,
+        "priority": "200",
         "direction": "Inbound",
         "access": "Allow",
         "protocol": "Tcp",
@@ -12,7 +12,7 @@
     },
     "http":{
         "name" : "allowhttp",
-        "priority": 201,
+        "priority": "201",
         "direction": "Inbound",
         "access": "Allow",
         "protocol": "Tcp",
@@ -23,7 +23,7 @@
     },
     "https":{
         "name" : "allowhttps",
-        "priority": 202,
+        "priority": "202",
         "direction": "Inbound",
         "access": "Allow",
         "protocol": "Tcp",
@@ -34,7 +34,7 @@
     },
     "postgres":{
         "name" : "allowpostgres",
-        "priority": 201,
+        "priority": "299",
         "direction": "Inbound",
         "access": "Allow",
         "protocol": "Tcp",

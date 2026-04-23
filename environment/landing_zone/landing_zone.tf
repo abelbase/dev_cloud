@@ -25,7 +25,7 @@ locals {
 }
 resource "time_static" "this" {}
 module "mod_resource_group" {
-  source      = "../../modules/resource_group"
+  source      = "git::https://github.com/abelbase/dev_cloud.git//modules/resource_group?ref=v1.0.4"
   for_each    = var.rg_config
   rg_name     = "${each.key}-${each.value.tags.team}-rg"
   rg_location = local.environment.prod.primary
@@ -33,7 +33,7 @@ module "mod_resource_group" {
 }
 
 module "mod_policy" {
-  source            = "../../modules/policy"
+  source            = "git::https://github.com/abelbase/dev_cloud.git//modules/policy?ref=v1.0.4"
   policy_config     = local.policy_config
   policy_set_config = var.policy_set_config
 }
@@ -45,7 +45,7 @@ resource "azurerm_subscription_policy_assignment" "this" {
 }
 
 module "mod_landing_networking" {
-  source             = "../../modules/networking"
+  source             = "git::https://github.com/abelbase/dev_cloud.git//modules/networking?ref=v1.0.4"
   vnet_name          = var.vnet_name
   rg                 = module.mod_resource_group["landingzone"].rg_name
   location           = local.environment.prod.primary

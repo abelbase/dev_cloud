@@ -13,16 +13,22 @@ locals {
       nsg_value,
       {
         nsg_details = merge(
+          nsg_value.nsg_details,
           {
-            nsg_name    = nsg_value.nsg_details.nsg_name,
-            subnet_name = nsg_value.nsg_details.subnet_name
-          },
-          {
-            rule = {
-              for k in nsg_value.nsg_details.all_rule :
-              k => local.rules[k] if contains(keys(local.rules), k)
-            }
+            for nsg_details_key, nsg_details_value in nsg_value.nsg_details :
+            nsg_details_key => merge(
+              { nsg_name    = nsg_details_value.nsg_name
+                subnet_name = nsg_details_value.subnet_name
+              },
+              {
+                rule = {
+                  for rule_name in nsg_details_value.all_rule :
+                  rule_name => try(local.rules[rule_name], {})
+                }
+              }
+            )
           }
+
 
         )
       }
@@ -33,20 +39,20 @@ locals {
 
 resource "time_static" "this" {}
 module "mod_rg" {
-  source      = "../../modules/resource_group"
+  source      = "git::https://github.com/abelbase/dev_cloud.git//modules/resource_group?ref=v1.0.4"
   for_each    = { for k in var.rg : k => k }
   rg_name     = each.key
   rg_location = local.location.primary
-  tags        = merge(var.tags["${each.value.rg}"], local.tags_addon)
+  tags        = merge(var.tags[each.key], local.tags_addon)
 }
 module "mod_networking" {
-  source             = "../../modules/networking"
+  source             = "git::https://github.com/abelbase/dev_cloud.git//modules/networking?ref=v1.0.4"
   for_each           = var.vnet_detials
-  rg                 = module.mod_rg["${each.value.rg}"].rg_name
+  rg                 = module.mod_rg[each.value.rg].rg_name
   location           = local.location.primary
   vnet_name          = each.key
   vnet_address_space = each.value.vnet_address
-  tags               = merge(var.tags["${each.value.rg}"], local.tags_addon)
+  tags               = merge(var.tags[each.value.rg], local.tags_addon)
   subnet_details     = each.value.subnet_details
-  nsg_details        = each.value.nsg_details 
+  nsg_details        = each.value.nsg_details
 }
