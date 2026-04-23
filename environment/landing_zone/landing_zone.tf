@@ -33,7 +33,7 @@ module "mod_resource_group" {
 }
 
 module "mod_policy" {
-  source            = "git::https://github.com/abelbase/dev_cloud.git//modules/policy?ref=v1.0.4"
+  source            = "git::https://github.com/abelbase/dev_cloud.git//modules/policy?ref=v1.0.5"
   policy_config     = local.policy_config
   policy_set_config = var.policy_set_config
 }
